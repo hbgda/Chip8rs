@@ -17,7 +17,7 @@ pub const FONT_SET: [u8; 16 * 5] = [
     0xF0, 0x90, 0xF0, 0x10, 0xF0,   // 9
     0xF0, 0x90, 0xF0, 0x90, 0x90,   // A
     0xE0, 0x90, 0xE0, 0x90, 0xE0,   // B
-    0xF0, 0x90, 0x90, 0x90, 0xF0,   // C
+    0xF0, 0x80, 0x80, 0x80, 0xF0,   // C
     0xE0, 0x90, 0x90, 0x90, 0xE0,   // D
     0xF0, 0x80, 0xF0, 0x80, 0xF0,   // E
     0xF0, 0x80, 0xF0, 0x80, 0x80    // F
@@ -25,7 +25,7 @@ pub const FONT_SET: [u8; 16 * 5] = [
 
 #[allow(non_snake_case)]
 pub struct CPU {
-    memory: [u8; 0x1000],
+    pub memory: [u8; 0x1000],
     // 8bit registers
     V: [u8; 16], 
     // 16bit register, generally for storing addresses
@@ -46,6 +46,8 @@ pub struct CPU {
     pub redraw: bool,
 
     pub pressed_keys: [bool; 16],
+
+    debug: bool
 
     // pub exec_history: Vec<u16>
 }
@@ -78,6 +80,11 @@ impl CPU {
 
         
         let opcode = op >> 12;
+        if self.debug {
+            println!("[0x{:0x}] [I: 0x{:0x}] Op: 0x{op:0x}, {args}", self.pc - 2, self.I);
+            // println!("{:?}", &self.memory[0x400..0x420]);
+            println!("V: {:0x?}\n", self.V);
+        }
         // if opcode != 0x1 {
             // println!("0x{op:0x}");
             // if !self.exec_history.contains(&opcode) {
@@ -418,7 +425,7 @@ impl CPU {
     // 0xDxyn
     pub fn drw(&mut self, x: u8, y: u8, n: u8) {
         self.V[0x0F] = 0;
-        'pixel: for byte in 0..n {
+        for byte in 0..n {
             for bit in 0..8 {
                 let sprite_bit = (self.memory[self.I as usize + byte as usize] >> (7 - bit)) & 1;
 
@@ -438,7 +445,7 @@ impl CPU {
 
                 let old_bit = if self.vbuffer[pixel_index] {1} else {0};
 
-                self.V[0xF] |= sprite_bit & old_bit;
+                // self.V[0xF] |= sprite_bit & old_bit;
                 self.vbuffer[pixel_index] = old_bit ^ sprite_bit != 0;
 
             }
@@ -498,7 +505,7 @@ impl CPU {
 }
 
 impl CPU {
-    pub fn new(quirks: Quirk) -> Self {
+    pub fn new(quirks: Quirk, debug: bool) -> Self {
         let mut cpu = CPU {
             memory: [0; 0x1000],
             V: [0; 16],
@@ -511,7 +518,8 @@ impl CPU {
             pressed_keys: [false; 16],
             vbuffer: [false; DISPLAY_SIZE],
             redraw: true,
-            quirks
+            quirks,
+            debug
             // exec_history: Vec::new()
         };
         cpu.memory[..FONT_SET.len()].copy_from_slice(&FONT_SET);

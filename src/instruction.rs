@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug)]
 pub struct Instruction {
     pub nnn: u16,
@@ -16,5 +18,11 @@ impl Instruction {
             x:  ((op & 0x0F00) >> 8) as u8,
             y:  ((op & 0x00F0) >> 4) as u8,
         }
+    }
+}
+
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[NNN: 0x{:0x}, KK: 0x{:0x}, N: 0x{:0x}, X: 0x{:0x}, Y: 0x{:0x}]", self.nnn, self.kk, self.n, self.x, self.y)
     }
 }
